@@ -1,2 +1,6 @@
 - [[file:timeline.py][timeline.py]] :: Visualize albums as timeline.
-  - Requirements: ~pip install pandas pillow dash mutagen~
+
+  Requirements:
+  - Python: ~pip install pandas pillow dash mutagen~
+  - Proper id3 metadata, specifically, publication years, for each file.
+  - A cover image in each album directory (e.g., "cover.jpg").
