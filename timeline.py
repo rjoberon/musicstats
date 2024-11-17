@@ -28,15 +28,14 @@ import plotly.express as px
 from PIL import Image
 from dash import Dash, dcc
 
-
 VERSION = "0.0.1"
+
 
 def get_songs(directory):
     """Traverse a directory and collect song metadata."""
     for pname in os.scandir(directory):
         if pname.is_dir():
-            for song in get_songs(pname.path):
-                yield song
+            yield from get_songs(pname.path)
         else:
             song = get_song(pname)
             if song:
