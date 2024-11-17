@@ -4,16 +4,22 @@
 #
 # Visualize albums as a timeline.
 #
-# Usage:
+# Usage: see timeline.py -h
 #
 # Author: rja
 #
 # Changes:
 # 2024-11-15 (rja)
 # - initial version
+#
+# Prerequisites:
+# - each album folder contains a cover image
+# - the id3 metadata contains the publication year of the album
 
+import os
+import argparse
 from PIL import Image
-from dash import Dash, html, dcc
+from dash import Dash, dcc
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
@@ -21,28 +27,24 @@ from mutagen.oggvorbis import OggVorbis
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import os
-import datetime
-import re
-import argparse
 
 
-version = "0.0.1"
+VERSION = "0.0.1"
 
 def get_songs(directory):
     """Traverse a directory and collect song metadata."""
-    for f in os.scandir(directory):
-        if f.is_dir():
-            for song in get_songs(f.path):
+    for pname in os.scandir(directory):
+        if pname.is_dir():
+            for song in get_songs(pname.path):
                 yield song
         else:
-            song = get_song(f)
+            song = get_song(pname)
             if song:
                 yield song
 
 def get_song(direntry):
     """Extract metadata from an mp3 file."""
-    fname, p, ext = direntry.path.rpartition('.')   # get file extension
+    fname, path, ext = direntry.path.rpartition('.')   # get file extension
     if ext in ['pdf', 'jpg', 'wav', 'docx', 'rtf']: # ignore some extensions
         return None
     if ext == "flac":                               # handle audio file formats
@@ -77,7 +79,7 @@ def get_value(mut, key, default=""):
 
 def load_data(directory, minfreq=3):
     """Load and pre-process data."""
-    df = pd.DataFrame([s for s in get_songs(directory)])
+    df = pd.DataFrame(list(get_songs(directory)))
 
     # clean path
     df["path"] = df["path"].apply(os.path.dirname).apply(lambda x:os.path.relpath(x, directory))
@@ -99,7 +101,7 @@ def plot_data(directory, albums, stats, cover_zoom=1.1, cover_file="cover.jpg"):
 
     # add album covers
     for aa in stats["albumartist"]:
-        for i, album in albums[albums["albumartist"] == aa].iterrows():
+        for _, album in albums[albums["albumartist"] == aa].iterrows():
             fname = os.path.join(directory, album["path"], cover_file)
             if os.path.isfile(fname):
                 fig.add_layout_image(
@@ -128,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('directory', type=str, help='input directory')
     parser.add_argument('-m', '--minfreq', type=int, metavar="F", help='minimal number of albums per album artist', default=3)
     parser.add_argument('-c', '--cover', type=str, metavar="FILE", help='cover file name', default="cover.jpg")
-    parser.add_argument('-v', '--version', action="version", version="%(prog)s " + version)
+    parser.add_argument('-v', '--version', action="version", version="%(prog)s " + VERSION)
 
     args = parser.parse_args()
 
