@@ -9,4 +9,4 @@
     ([[https://pypi.org/project/get-cover-art/][get-cover-art]] can do that with the options ~--art-dest-inline~
     and ~--no-embed~).
 
-file:timeline.png
+[[file:timeline.png]]
