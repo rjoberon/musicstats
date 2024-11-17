@@ -17,6 +17,7 @@
 # - the id3 metadata contains the publication year of the album
 
 import os
+import datetime
 import argparse
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
@@ -136,16 +137,22 @@ def plot_data_pyplot(directory, albums, stats, cover_file="cover.jpg", out_file=
 
     plt.rcParams["figure.figsize"] = [16,9]
     ax = plt.subplot(111)
-    plt.grid(zorder=0)
+    ax.grid(axis="x", zorder=0)
+    ax.tick_params(axis="both", which="both", length=0)
+    ax.get_yaxis().set_visible(False)
+    for sp in ["top", "right", "bottom", "left"]:
+        ax.spines[sp].set_visible(False)
     ax.barh(stats["albumartist"], width=mmax - mmin, left=mmin, zorder=3, height=0.2)
 
     for aa in stats["albumartist"]:
+        plt.text(stats[stats["albumartist"] == aa]["year_min"] - datetime.timedelta(days=365), aa, aa, ha="right", va="center")
         for _, album in albums[albums["albumartist"] == aa].iterrows():
             fname = os.path.join(directory, album["path"], cover_file)
             if os.path.isfile(fname):
                 img = OffsetImage(mpimg.imread(fname), zoom=.03)
                 ax.add_artist(AnnotationBbox(img, (album["year"], aa), frameon=False))
 
+    plt.tight_layout()
     plt.savefig(out_file)
 
 

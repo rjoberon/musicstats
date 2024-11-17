@@ -8,3 +8,5 @@
   - A cover image (e.g., "cover.jpg") in each album directory
     ([[https://pypi.org/project/get-cover-art/][get-cover-art]] can do that with the options ~--art-dest-inline~
     and ~--no-embed~).
+
+file:timeline.png
