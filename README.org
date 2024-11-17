@@ -3,4 +3,6 @@
   Requirements:
   - Python: ~pip install pandas pillow dash mutagen~
   - Proper id3 metadata, specifically, publication years, for each file.
-  - A cover image in each album directory (e.g., "cover.jpg").
+  - A cover image (e.g., "cover.jpg") in each album directory
+    ([[https://pypi.org/project/get-cover-art/][get-cover-art]] can do that with the options ~--art-dest-inline~
+    and ~--no-embed~).
