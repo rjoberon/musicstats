@@ -18,15 +18,15 @@
 
 import os
 import argparse
-from PIL import Image
-from dash import Dash, dcc
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.express as px
+from PIL import Image
+from dash import Dash, dcc
 
 
 VERSION = "0.0.1"
@@ -85,11 +85,17 @@ def load_data(directory, minfreq=3):
     df["path"] = df["path"].apply(os.path.dirname).apply(lambda x:os.path.relpath(x, directory))
 
     # drop songs
-    albums = df[["path", "albumartist", "album", "year"]].drop_duplicates().replace("", np.nan).dropna().reset_index(drop=True).groupby("albumartist").filter(lambda x: len(x) >= minfreq)
+    albums = df[["path", "albumartist", "album", "year"]].drop_duplicates()
+    # drop albums with missing year
+    albums = albums.replace("", np.nan).dropna().reset_index(drop=True)
+    # drop infrequent album artists
+    albums = albums.groupby("albumartist").filter(lambda x: len(x) >= minfreq)
+    # parse year as date
     albums["year"] = pd.to_datetime(albums["year"], format="%Y")
 
     # create stats
-    stats = albums.groupby("albumartist").agg({"year" : ["min", "max", "count"]}).reset_index().sort_values([("year", "min")], ascending=False)
+    stats = albums.groupby("albumartist").agg({"year" : ["min", "max", "count"]})
+    stats = stats.reset_index().sort_values([("year", "min")], ascending=False)
     stats.columns = [' '.join(col).strip().replace(" ", "_") for col in stats.columns.values]
 
     return albums, stats
@@ -97,7 +103,8 @@ def load_data(directory, minfreq=3):
 
 def plot_data(directory, albums, stats, cover_zoom=1.1, cover_file="cover.jpg"):
     """Plot the data."""
-    fig = px.timeline(stats, x_start="year_min", x_end="year_max", y="albumartist", height=1000, opacity=0.3) #  color="year_count",
+    fig = px.timeline(stats, x_start="year_min", x_end="year_max", y="albumartist",
+                      height=1000, opacity=0.3) #  color="year_count",
 
     # add album covers
     for aa in stats["albumartist"]:
@@ -126,10 +133,13 @@ def plot_data(directory, albums, stats, cover_zoom=1.1, cover_file="cover.jpg"):
     return fig
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Visualize albums as timeline', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='Visualize albums as timeline',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('directory', type=str, help='input directory')
-    parser.add_argument('-m', '--minfreq', type=int, metavar="F", help='minimal number of albums per album artist', default=3)
-    parser.add_argument('-c', '--cover', type=str, metavar="FILE", help='cover file name', default="cover.jpg")
+    parser.add_argument('-m', '--minfreq', type=int, metavar="F",
+                        help='minimal number of albums per album artist', default=3)
+    parser.add_argument('-c', '--cover', type=str, metavar="FILE",
+                        help='cover file name', default="cover.jpg")
     parser.add_argument('-v', '--version', action="version", version="%(prog)s " + VERSION)
 
     args = parser.parse_args()

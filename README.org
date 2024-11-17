@@ -1,0 +1,2 @@
+- [[file:timeline.py][timeline.py]] :: Visualize albums as timeline.
+  - Requirements: ~pip install pandas pillow dash mutagen~
