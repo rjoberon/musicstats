@@ -25,61 +25,17 @@ from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
 import numpy as np
 import pandas as pd
+import albumstats
 
 VERSION = "0.0.1"
 
 
-def get_songs(directory):
-    """Traverse a directory and collect song metadata."""
-    for pname in os.scandir(directory):
-        if pname.is_dir():
-            yield from get_songs(pname.path)
-        else:
-            song = get_song(pname)
-            if song:
-                yield song
-
-def get_song(direntry):
-    """Extract metadata from an mp3 file."""
-    fname, path, ext = direntry.path.rpartition('.')   # get file extension
-    if ext in ['pdf', 'jpg', 'wav', 'docx', 'rtf']: # ignore some extensions
-        return None
-    if ext == "flac":                               # handle audio file formats
-        mut = FLAC(direntry.path)
-    elif ext == "m4a":
-        mut = MP4(direntry.path)
-    elif ext == 'ogg':
-        mut = OggVorbis(direntry.path)
-    else:                                           # MP3 is the fallback
-        mut = EasyID3(direntry.path)
-    return get_metadata(direntry, mut)
-
-
-def get_metadata(direntry, mut):
-    """Extract metadata for one song."""
-    return {
-        "path" : direntry.path,
-        "title" : get_value(mut, "title"),
-        "artist" : get_value(mut, "artist"),
-        "album" : get_value(mut, "album"),
-        "albumartist" : get_value(mut, "albumartist", None),
-        "year" : get_value(mut, "date"),
-    }
-
-
-def get_value(mut, key, default=""):
-    """Get a (possibly missing) value for a key."""
-    if key in mut:
-        return mut[key][0]
-    return default
-
-
-def load_data(directory, minfreq=3):
+def load_data(directory, excludes, minfreq=3):
     """Load and pre-process data."""
-    df = pd.DataFrame(list(get_songs(directory)))
+    df = pd.DataFrame(list(albumstats.get_songs(directory, directory, excludes)))
 
     # clean path
-    df["path"] = df["path"].apply(os.path.dirname).apply(lambda x:os.path.relpath(x, directory))
+    df["path"] = df["id"].apply(os.path.dirname).apply(lambda x:os.path.relpath(x, directory))
 
     # drop songs
     albums = df[["path", "albumartist", "album", "year"]].drop_duplicates()
@@ -168,11 +124,14 @@ if __name__ == '__main__':
                         help='cover file name', default="cover.jpg")
     parser.add_argument('-o', '--out', type=str, metavar="FILE",
                         help='output file name', default="timeline.png")
+    parser.add_argument('-e', '--exclude', type=str, metavar="FILE", help='exclude directories')
     parser.add_argument('-v', '--version', action="version", version="%(prog)s " + VERSION)
 
     args = parser.parse_args()
 
-    albums, stats = load_data(args.directory, args.minfreq)
+    excludes = albumstats.get_excludes(args.exclude) if args.exclude else []
+
+    albums, stats = load_data(args.directory, excludes, args.minfreq)
 
     if args.mode == "web":
         import plotly.express as px
