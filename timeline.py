@@ -9,6 +9,8 @@
 # Author: rja
 #
 # Changes:
+# 2025-03-31 (rja)
+# - refactored to use musicstats
 # 2024-11-15 (rja)
 # - initial version
 #
@@ -19,20 +21,16 @@
 import os
 import datetime
 import argparse
-from mutagen.easyid3 import EasyID3
-from mutagen.flac import FLAC
-from mutagen.mp4 import MP4
-from mutagen.oggvorbis import OggVorbis
 import numpy as np
 import pandas as pd
-import albumstats
+import musicstats
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 
 def load_data(directory, excludes, minfreq=3):
     """Load and pre-process data."""
-    df = pd.DataFrame(list(albumstats.get_songs(directory, directory, excludes)))
+    df = pd.DataFrame(list(musicstats.get_songs(directory, directory, excludes)))
 
     # clean path
     df["path"] = df["id"].apply(os.path.dirname).apply(lambda x:os.path.relpath(x, directory))
@@ -129,9 +127,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    excludes = albumstats.get_excludes(args.exclude) if args.exclude else []
-
-    albums, stats = load_data(args.directory, excludes, args.minfreq)
+    albums, stats = load_data(args.directory, args.excludes, args.minfreq)
 
     if args.mode == "web":
         import plotly.express as px

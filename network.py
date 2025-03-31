@@ -9,28 +9,24 @@
 # Author: rja
 #
 # Changes:
+# 2025-03-31 (rja)
+# - refactored to use musicstats
 # 2025-03-18 (rja)
 # - initial version
 #
 
-import os
-import re
 import argparse
-from mutagen.easyid3 import EasyID3
-from mutagen.flac import FLAC
-from mutagen.mp4 import MP4
-from mutagen.oggvorbis import OggVorbis
-import albumstats
+import musicstats
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 
-def load_data(directory, excludes=[]):
+def load_data(directory, excludes):
     """Load and pre-process data."""
-    songs = dict()
-    artists = dict()
-    for song in albumstats.get_songs(directory, directory, excludes):
-        title_norm = albumstats.normalize_title(song["title"])
+    songs = {}
+    artists = {}
+    for song in musicstats.get_songs(directory, directory, excludes):
+        title_norm = musicstats.normalize_title(song["title"])
         if len(title_norm) > 0:
             songs[title_norm] = song["title"]
             if title_norm not in artists:
@@ -41,7 +37,7 @@ def load_data(directory, excludes=[]):
 
 
 def filter_songs(artists, songs, minfreq=2):
-    new_artists = dict()
+    new_artists = {}
     for song in artists:
         if len(artists[song]) >= minfreq:
             new_artists[song] = artists[song]
@@ -82,9 +78,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    excludes = albumstats.get_excludes(args.exclude) if args.exclude else []
-
-    artists, songs = load_data(args.directory, excludes)
+    artists, songs = load_data(args.directory, args.excludes)
     print("songs:", len(songs))
     artists = filter_songs(artists, songs)
     print("songs:", len(songs), "(after filtering)")

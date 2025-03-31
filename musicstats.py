@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Print statistics about my audio library
+# Accessing and analysing a music library
 #
 # Usage:
 #
@@ -13,15 +13,11 @@
 # - initial version copied from analyse.py
 
 import re
-import argparse
 import os
 from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
-from Levenshtein import distance
-
-version = "0.0.1"
 
 re_norm_title = re.compile(r"[^a-z ]")
 
@@ -30,8 +26,9 @@ re_norm_title = re.compile(r"[^a-z ]")
 # basic music collection functions
 #
 
-def get_songs(basedir, directory, excludes=[]):
+def get_songs(basedir, directory, excludes):
     """Traverse a directory and collect song metadata."""
+    excludes = get_excludes(excludes) if excludes else []
     for pname in os.scandir(directory):
         if pname.is_dir():
             if os.path.relpath(pname.path, basedir) not in excludes:
@@ -80,45 +77,14 @@ def get_value(mut, key, default=""):
 
 
 def normalize_title(title):
+    """Normalize a song title."""
     return " ".join(re_norm_title.sub("", title.lower()).split())
 
 
-def get_albums(songs):
-    """Collect albums"""
-    done = set()
-    for song in songs:
-        aa = song["albumartist"]
-        if aa is not None:
-            album = (aa, song["album"], song["year"])
-            if album not in done:
-                done.add(album)
-                yield album
-
-
 def get_excludes(fname):
+    """Load excludes from file."""
     excludes = set()
     with open(fname, "rt") as f:
         for line in f:
             excludes.add(line.strip())
     return excludes
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='analyse audio library', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('dir', type=str, help='input directory')
-    parser.add_argument('-a', "--albums", action="store_true", help='print albums')
-    parser.add_argument('-e', '--exclude', type=str, metavar="FILE", help='exclude directories')
-    parser.add_argument('-s', "--songs", action="store_true", help='print songs')
-    parser.add_argument('-v', '--version', action="version", version="%(prog)s " + version)
-
-    args = parser.parse_args()
-
-    excludes = get_excludes(args.exclude) if args.exclude else []
-
-    # do work
-    songs = get_songs(args.dir, args.dir, excludes)
-    if args.albums:
-        albums = get_albums(songs)
-
-        for a in albums:
-            print(a)
