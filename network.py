@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    artists, songs = load_data(args.directory, args.excludes)
+    artists, songs = load_data(args.directory, args.exclude)
     print("songs:", len(songs))
     artists = filter_songs(artists, songs)
     print("songs:", len(songs), "(after filtering)")

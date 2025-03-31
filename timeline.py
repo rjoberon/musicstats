@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    albums, stats = load_data(args.directory, args.excludes, args.minfreq)
+    albums, stats = load_data(args.directory, args.exclude, args.minfreq)
 
     if args.mode == "web":
         import plotly.express as px

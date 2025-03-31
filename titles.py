@@ -57,7 +57,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # do work
-    titles = get_titles(args.dir, args.excludes)
+    titles = get_titles(args.dir, args.exclude)
     for title in sorted(titles, key=lambda i:len(titles[i]), reverse=True):
         paths = titles[title]
         if len(paths) > 1:
