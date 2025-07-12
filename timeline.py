@@ -106,7 +106,8 @@ def plot_data_pyplot(directory, albums, stats, cover_file="cover.jpg", out_file=
             if os.path.isfile(fname):
                 img = OffsetImage(mpimg.imread(fname), zoom=.03)
                 ax.add_artist(AnnotationBbox(img, (album["year"], aa), frameon=False))
-
+            else:
+                print("missing:", album["path"])
     plt.tight_layout()
     plt.savefig(out_file)
 
