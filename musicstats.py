@@ -28,7 +28,6 @@ re_norm_title = re.compile(r"[^a-z ]")
 
 def get_songs(basedir, directory, excludes):
     """Traverse a directory and collect song metadata."""
-    excludes = get_excludes(excludes) if excludes else []
     for pname in os.scandir(directory):
         if pname.is_dir():
             if os.path.relpath(pname.path, basedir) not in excludes:

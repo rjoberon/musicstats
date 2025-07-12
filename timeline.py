@@ -28,12 +28,13 @@ import musicstats
 VERSION = "0.0.2"
 
 
-def load_data(directory, excludes, minfreq=3):
+def load_data(directory, excludes_fname, minfreq=3):
     """Load and pre-process data."""
+    excludes = musicstats.get_excludes(excludes_fname) if excludes_fname else []
     df = pd.DataFrame(list(musicstats.get_songs(directory, directory, excludes)))
 
     # clean path
-    df["path"] = df["id"].apply(os.path.dirname).apply(lambda x:os.path.relpath(x, directory))
+    df["path"] = df["id"].apply(os.path.dirname).apply(lambda x: os.path.relpath(x, directory))
 
     # drop songs
     albums = df[["path", "albumartist", "album", "year"]].drop_duplicates()
@@ -45,7 +46,7 @@ def load_data(directory, excludes, minfreq=3):
     albums["year"] = pd.to_datetime(albums["year"], format="%Y")
 
     # create stats
-    stats = albums.groupby("albumartist").agg({"year" : ["min", "max", "count"]})
+    stats = albums.groupby("albumartist").agg({"year": ["min", "max", "count"]})
     stats = stats.reset_index().sort_values([("year", "min")], ascending=False)
     stats.columns = [' '.join(col).strip().replace(" ", "_") for col in stats.columns.values]
 
@@ -55,7 +56,7 @@ def load_data(directory, excludes, minfreq=3):
 def plot_data_plotly(directory, albums, stats, cover_zoom=1.1, cover_file="cover.jpg"):
     """Plot the data using plotly express."""
     fig = px.timeline(stats, x_start="year_min", x_end="year_max", y="albumartist",
-                      height=1000, opacity=0.3) #  color="year_count",
+                      height=1000, opacity=0.3)  # color="year_count",
 
     # add album covers
     for aa in stats["albumartist"]:
@@ -78,7 +79,7 @@ def plot_data_plotly(directory, albums, stats, cover_zoom=1.1, cover_file="cover
 
     # style of plot
     fig.update_layout(
-        plot_bgcolor = 'white'
+        plot_bgcolor='white'
     )
 
     return fig
@@ -89,7 +90,7 @@ def plot_data_pyplot(directory, albums, stats, cover_file="cover.jpg", out_file=
     mmin = stats["year_min"]
     mmax = stats["year_max"]
 
-    plt.rcParams["figure.figsize"] = [16,9]
+    plt.rcParams["figure.figsize"] = [16, 9]
     ax = plt.subplot(111)
     ax.grid(axis="x", zorder=0)
     ax.tick_params(axis="both", which="both", length=0)
@@ -114,8 +115,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualize albums as timeline',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('directory', type=str, help='input directory')
-    parser.add_argument('mode', type=str, choices=["web", "file"], nargs='?', const="web",
-                        help='output mode', default="web")
+    parser.add_argument('mode', type=str, choices=["web", "file"], nargs='?',
+                        const="web", help='output mode', default="web")
     parser.add_argument('-m', '--minfreq', type=int, metavar="F",
                         help='minimal number of albums per album artist', default=3)
     parser.add_argument('-c', '--cover', type=str, metavar="FILE",
